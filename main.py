@@ -46,8 +46,7 @@ def webhook():
                     var_dia = accion["Var_Dia"]
                     pm = accion["P_M"]
                     simbolo = "📈" if var_dia >= 0 else "📉"
-                    resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}
-"
+                    resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
                 resumen = f"⚠️ Error al cargar el portafolio: {str(e)}"
 
