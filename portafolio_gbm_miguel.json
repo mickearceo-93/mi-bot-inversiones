@@ -1,0 +1,200 @@
+[
+  {
+    "Ticker": "1211 N",
+    "Titulos": 2,
+    "Costo_promedio": 1049.97,
+    "Precio_mercado": 1041.0,
+    "Valor_mercado": 2082.0,
+    "P_M": -17.94,
+    "Var_Dia": 4.77
+  },
+  {
+    "Ticker": "1810 N",
+    "Titulos": 15,
+    "Costo_promedio": 121.32,
+    "Precio_mercado": 134.0,
+    "Valor_mercado": 2010.0,
+    "P_M": 190.15,
+    "Var_Dia": 2.49
+  },
+  {
+    "Ticker": "AAPL *",
+    "Titulos": 1,
+    "Costo_promedio": 3911.99,
+    "Precio_mercado": 3844.74,
+    "Valor_mercado": 3844.74,
+    "P_M": -67.25,
+    "Var_Dia": -1.23
+  },
+  {
+    "Ticker": "ABNB *",
+    "Titulos": 1,
+    "Costo_promedio": 2200.0,
+    "Precio_mercado": 2628.01,
+    "Valor_mercado": 2628.01,
+    "P_M": 428.01,
+    "Var_Dia": 2.55
+  },
+  {
+    "Ticker": "AMZN *",
+    "Titulos": 2,
+    "Costo_promedio": 3680.01,
+    "Precio_mercado": 3989.88,
+    "Valor_mercado": 7979.76,
+    "P_M": 619.74,
+    "Var_Dia": 0.31
+  },
+  {
+    "Ticker": "NU N",
+    "Titulos": 6,
+    "Costo_promedio": 196.5,
+    "Precio_mercado": 231.93,
+    "Valor_mercado": 1391.58,
+    "P_M": 212.58,
+    "Var_Dia": 1.2
+  },
+  {
+    "Ticker": "NVDA *",
+    "Titulos": 1,
+    "Costo_promedio": 2247.0,
+    "Precio_mercado": 2685.33,
+    "Valor_mercado": 2685.33,
+    "P_M": 438.33,
+    "Var_Dia": -1.41
+  },
+  {
+    "Ticker": "OXY1 *",
+    "Titulos": 4,
+    "Costo_promedio": 798.08,
+    "Precio_mercado": 801.0,
+    "Valor_mercado": 3204.0,
+    "P_M": 11.68,
+    "Var_Dia": -0.42
+  },
+  {
+    "Ticker": "PYPL *",
+    "Titulos": 2,
+    "Costo_promedio": 1220.0,
+    "Precio_mercado": 1390.0,
+    "Valor_mercado": 2780.0,
+    "P_M": 340.0,
+    "Var_Dia": -0.51
+  },
+  {
+    "Ticker": "SHOP N",
+    "Titulos": 1,
+    "Costo_promedio": 1689.0,
+    "Precio_mercado": 1996.0,
+    "Valor_mercado": 1996.0,
+    "P_M": 307.0,
+    "Var_Dia": 0.4
+  },
+  {
+    "Ticker": NaN,
+    "Titulos": NaN,
+    "Costo_promedio": NaN,
+    "Precio_mercado": NaN,
+    "Valor_mercado": NaN,
+    "P_M": NaN,
+    "Var_Dia": NaN
+  },
+  {
+    "Ticker": "Mercado de Capitales Nacional",
+    "Titulos": NaN,
+    "Costo_promedio": NaN,
+    "Precio_mercado": NaN,
+    "Valor_mercado": NaN,
+    "P_M": NaN,
+    "Var_Dia": NaN
+  },
+  {
+    "Ticker": "ALSEA *",
+    "Titulos": 12,
+    "Costo_promedio": 44.61,
+    "Precio_mercado": 50.6,
+    "Valor_mercado": 607.2,
+    "P_M": 71.84,
+    "Var_Dia": 0.45
+  },
+  {
+    "Ticker": "BBVA *",
+    "Titulos": 2,
+    "Costo_promedio": 281.98,
+    "Precio_mercado": 288.25,
+    "Valor_mercado": 576.5,
+    "P_M": 12.54,
+    "Var_Dia": 0.09
+  },
+  {
+    "Ticker": "CEMEX CPO",
+    "Titulos": 21,
+    "Costo_promedio": 11.7,
+    "Precio_mercado": 13.08,
+    "Valor_mercado": 274.68,
+    "P_M": 28.95,
+    "Var_Dia": 0.3
+  },
+  {
+    "Ticker": "GFINBUR O",
+    "Titulos": 5,
+    "Costo_promedio": 46.63,
+    "Precio_mercado": 49.27,
+    "Valor_mercado": 246.35,
+    "P_M": 13.2,
+    "Var_Dia": -0.48
+  },
+  {
+    "Ticker": NaN,
+    "Titulos": NaN,
+    "Costo_promedio": NaN,
+    "Precio_mercado": NaN,
+    "Valor_mercado": NaN,
+    "P_M": NaN,
+    "Var_Dia": NaN
+  },
+  {
+    "Ticker": "Efectivo",
+    "Titulos": NaN,
+    "Costo_promedio": NaN,
+    "Precio_mercado": NaN,
+    "Valor_mercado": NaN,
+    "P_M": NaN,
+    "Var_Dia": NaN
+  },
+  {
+    "Ticker": "EFEC.  MISMO DIA",
+    "Titulos": 0,
+    "Costo_promedio": 0.0,
+    "Precio_mercado": 0.0,
+    "Valor_mercado": 11.91,
+    "P_M": 0.0,
+    "Var_Dia": 0.0
+  },
+  {
+    "Ticker": "EFEC. 24 HRS.",
+    "Titulos": 0,
+    "Costo_promedio": 0.0,
+    "Precio_mercado": 0.0,
+    "Valor_mercado": 0.0,
+    "P_M": 0.0,
+    "Var_Dia": 0.0
+  },
+  {
+    "Ticker": "EFEC. 48 HRS.",
+    "Titulos": 0,
+    "Costo_promedio": 0.0,
+    "Precio_mercado": 0.0,
+    "Valor_mercado": 0.0,
+    "P_M": 0.0,
+    "Var_Dia": 0.0
+  },
+  {
+    "Ticker": "EFEC. MAYOR 48 HRS.",
+    "Titulos": 0,
+    "Costo_promedio": 0.0,
+    "Precio_mercado": 0.0,
+    "Valor_mercado": 0.0,
+    "P_M": 0.0,
+    "Var_Dia": 0.0
+  }
+]
