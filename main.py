@@ -4,8 +4,8 @@ import json
 import requests
 from flask import Flask, request
 
-TOKEN = os.getenv("TELEGRAM_TOKEN")  # Asegúrate de tenerlo configurado en Render
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Tu token de GitHub privado
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversiones/main/portafolio_gbm_miguel.json"
 
 app = Flask(__name__)
@@ -16,6 +16,8 @@ def cargar_portafolio_privado():
         "Accept": "application/vnd.github+json"
     }
     response = requests.get(REPO_RAW_URL, headers=headers)
+    print("🔍 GitHub response code:", response.status_code)
+    print("🔍 GitHub response text:", response.text[:100])
     response.raise_for_status()
     return response.json()
 
@@ -37,18 +39,19 @@ def webhook():
         if texto == "/start":
             enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
         elif texto == "/resumen":
-            resumen = "📊 Aquí va tu resumen de hoy:"
             try:
                 portafolio = cargar_portafolio_privado()
+                resumen = "📊 Tu resumen de hoy:
+"
                 for accion in portafolio:
-                    ticker = accion["Ticker"]
-                    var_dia = accion["Var_Dia"]
-                    pm = accion["P_M"]
+                    ticker = accion.get("Ticker", "")
+                    var_dia = accion.get("Var_Dia", 0)
+                    pm = accion.get("P_M", 0)
                     simbolo = "📈" if var_dia >= 0 else "📉"
                     resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
-                resumen = f"⚠️ Error al cargar el portafolio: {str(e)}"
-
+                resumen = f"⚠️ Error al cargar el portafolio:
+{str(e)}"
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
