@@ -37,7 +37,7 @@ def webhook():
         if texto == "/start":
             enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
         elif texto == "/resumen":
-            resumen = "📊 Aquí va tu resumen de hoy:
+            resumen = "📊 Aquí va tu resumen de hoy:"
 "
             try:
                 portafolio = cargar_portafolio_privado()
