@@ -119,8 +119,8 @@ def webhook():
                             continue
                         if any(math.isnan(x) for x in [compra, actual]):
                             continue
-                            continue
                     except:
+                        continue
                         continue
                         continue
 
