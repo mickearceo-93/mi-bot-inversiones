@@ -14,7 +14,6 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversiones/main/portafolio_gbm_miguel.json"
 
-# Control de ejecución por mensaje
 mensajes_procesados = set()
 
 ticker_alias = {
@@ -67,10 +66,13 @@ def obtener_analisis_openai(nombre, ticker):
         return f"⚠️ Error OpenAI {response.status_code}: {response.text[:100]}..."
 
 def limpiar_ticker(raw):
-    return raw.strip().split()[0].replace("*", "").replace("$", "")
+    try:
+        return str(raw).strip().split()[0].replace("*", "").replace("$", "")
+    except:
+        return str(raw)
 
 def traducir_nombre(raw):
-    base = raw.strip().replace("*", "")
+    base = str(raw).strip().replace("*", "")
     return ticker_alias.get(base, base)
 
 def enviar_mensaje(chat_id, texto):
@@ -86,7 +88,6 @@ def webhook():
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "").strip()
 
-        # Verifica si este mensaje ya fue procesado
         if msg_id in mensajes_procesados:
             print(f"⏭ Ya procesado message_id={msg_id}")
             return {"ok": True}
