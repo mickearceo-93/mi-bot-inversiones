@@ -98,9 +98,9 @@ def webhook():
         elif texto == "/resumen":
             try:
                 portafolio = cargar_portafolio_privado()
-                tickers_procesados = set()
+                    tickers_procesados = set()
                 for accion in portafolio:
-                tickers_procesados = set()
+                    tickers_procesados = set()
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
                     ticker = limpiar_ticker(raw_ticker)
