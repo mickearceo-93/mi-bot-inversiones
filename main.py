@@ -97,7 +97,6 @@ def webhook():
             enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
         elif texto == "/resumen":
             try:
-                tickers_procesados = set()
                 portafolio = cargar_portafolio_privado()
                 tickers_procesados = set()
                 for accion in portafolio:
@@ -105,11 +104,8 @@ def webhook():
                     raw_ticker = datos.get("Ticker", "")
                     ticker = limpiar_ticker(raw_ticker)
                     nombre_legible = traducir_nombre(raw_ticker).upper()
-                    if ticker in tickers_procesados:
-                        continue
-                    tickers_procesados.add(ticker)
 
-                    if not raw_ticker or nombre_legible in ["EFECTIVO", "NAN", ""] or "EFECTIVO" in nombre_legible:
+                    if not raw_ticker or nombre_legible in ["EFECTIVO", "NAN", ""]:
                         continue
 
                     if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
@@ -122,7 +118,7 @@ def webhook():
                         if compra == 0 or actual == 0:
                         if any(math.isnan(x) for x in [compra, actual]):
                             continue
-                            continue
+                        continue
                     except:
                         continue
 
