@@ -51,27 +51,25 @@ def obtener_analisis_openai(nombre, ticker):
 
     data = {
         "model": "gpt-4o",
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
+        "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.7
     }
 
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
+
     if response.status_code == 200:
         return response.json()["choices"][0]["message"]["content"]
     else:
-        return "⚠️ No se pudo obtener proyecciones o noticias"
+        print("🔴 OpenAI ERROR:", response.status_code)
+        print("🔴 Response content:", response.text)
+        return f"⚠️ Error OpenAI {response.status_code}: {response.text[:100]}..."
 
 def limpiar_ticker(raw):
     return raw.strip().split()[0].replace("*", "").replace("$", "")
 
 def enviar_mensaje(chat_id, texto):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": texto
-    }
+    payload = {"chat_id": chat_id, "text": texto}
     requests.post(url, json=payload)
 
 @app.route(f"/{TOKEN}", methods=["POST"])
@@ -91,21 +89,15 @@ def webhook():
                     raw_ticker = datos.get("Ticker", "")
                     nombre = raw_ticker
                     ticker = limpiar_ticker(raw_ticker)
-
                     compra = float(datos.get("Costo_promedio", 0) or 0)
                     actual = float(datos.get("Precio_mercado", 0) or 0)
-
                     if not raw_ticker or compra == 0 or actual == 0:
                         continue
-
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
                     fecha_compra = estimar_fecha_compra(ticker, compra)
-
-                    # Obtener análisis desde ChatGPT
                     analisis = obtener_analisis_openai(nombre, ticker)
 
-                    # Construir resumen
                     resumen = f"📊 {nombre}\n"
                     resumen += f"1. Precio de compra: ${compra:.2f}\n"
                     resumen += f"2. Fecha estimada de compra: {fecha_compra}\n"
@@ -115,7 +107,7 @@ def webhook():
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
-                enviar_mensaje(chat_id, f"⚠️ Error al analizar el portafolio:\n{str(e)}")
+                enviar_mensaje(chat_id, f"⚠️ Error procesando tu portafolio:\n{str(e)}")
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
     return {"ok": True}
@@ -125,4 +117,5 @@ def health():
     return "Bot corriendo correctamente ✅"
 
 if __name__ == "__main__":
+    print("🔧 OPENAI_API_KEY:", OPENAI_API_KEY[:10] + "..." if OPENAI_API_KEY else "❌ No definida")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
