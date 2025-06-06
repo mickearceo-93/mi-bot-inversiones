@@ -6,7 +6,7 @@ import math
 import requests
 import yfinance as yf
 from flask import Flask, request
-from datetime import datetime, timedelta
+from datetime import datetime
 
 sys.stdout.reconfigure(line_buffering=True)
 
@@ -75,6 +75,10 @@ def sugerencia(pct):
     else:
         return "🟡 Sugerencia: MANTENER"
 
+def limpiar_ticker(raw_ticker):
+    base = str(raw_ticker).strip().replace("$", "").replace("*", "")
+    return base.split()[0]
+
 def enviar_mensaje(chat_id, texto):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {
@@ -97,11 +101,21 @@ def webhook():
                 portafolio = cargar_portafolio_privado()
                 for accion in portafolio:
                     datos = {k.strip(): v for k, v in accion.items()}
-                    ticker = str(datos.get("Ticker", "")).strip()
+                    raw_ticker = datos.get("Ticker", "")
+                    ticker = limpiar_ticker(raw_ticker)
                     compra = float(datos.get("Costo_promedio", 0) or 0)
                     actual = float(datos.get("Precio_mercado", 0) or 0)
 
                     if not ticker or compra == 0 or actual == 0:
+                        continue
+
+                    try:
+                        info = yf.Ticker(ticker).info
+                        if not info or not info.get("regularMarketPrice"):
+                            enviar_mensaje(chat_id, f"⚠️ No se encontró información para {raw_ticker}")
+                            continue
+                    except:
+                        enviar_mensaje(chat_id, f"⚠️ No se pudo procesar {raw_ticker}")
                         continue
 
                     ganancia = actual - compra
@@ -118,11 +132,11 @@ def webhook():
                     resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)\n"
                     resumen += f"5. {noticia}\n"
                     resumen += f"6. 📈 Proyecciones: {proy}\n"
-                    resumen += f"7. {accion_final}\n"
+                    resumen += f"7. {accion_final}"
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
-                enviar_mensaje(chat_id, f"⚠️ Error al cargar el portafolio:{str(e)}")
+                enviar_mensaje(chat_id, f"⚠️ Error al cargar el portafolio:\n{str(e)}")
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
     return {"ok": True}
