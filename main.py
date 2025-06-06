@@ -14,13 +14,15 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversiones/main/portafolio_gbm_miguel.json"
 
+# Control de ejecución por mensaje
+mensajes_procesados = set()
+
 ticker_alias = {
     "1211 N": "BYD",
     "1810 N": "XIAOMI",
     "OXY1 *": "OXY"
 }
 
-tickers_procesados = set()
 app = Flask(__name__)
 
 def cargar_portafolio_privado():
@@ -80,14 +82,22 @@ def enviar_mensaje(chat_id, texto):
 def webhook():
     datos = request.get_json()
     if "message" in datos:
+        msg_id = datos["message"]["message_id"]
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "").strip()
+
+        # Verifica si este mensaje ya fue procesado
+        if msg_id in mensajes_procesados:
+            print(f"⏭ Ya procesado message_id={msg_id}")
+            return {"ok": True}
+        mensajes_procesados.add(msg_id)
+
         if texto == "/start":
             enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
         elif texto == "/resumen":
             try:
                 portafolio = cargar_portafolio_privado()
-                tickers_procesados.clear()
+                tickers_procesados = set()
                 for accion in portafolio:
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
@@ -106,7 +116,7 @@ def webhook():
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
                     fecha_compra = estimar_fecha_compra(ticker, compra)
-                    analisis = obtener_analisis_openai(nombre_legible, ticker)
+                    #analisis = obtener_analisis_openai(nombre_legible, ticker)
 
                     resumen = f"📊 {nombre_legible}\n"
                     resumen += f"1. Precio de compra: ${compra:.2f}\n"
