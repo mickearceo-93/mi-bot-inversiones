@@ -121,8 +121,6 @@ def webhook():
                     except:
                         continue
                         continue
-                        continue
-
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
 
