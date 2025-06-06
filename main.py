@@ -99,7 +99,8 @@ def webhook():
             try:
                 portafolio = cargar_portafolio_privado()
                 tickers_procesados = set()
-                for accion in portafolio:
+                
+            for accion in portafolio:
                 datos = {k.strip(): v for k, v in accion.items()}
                 raw_ticker = datos.get("Ticker", "")
                 ticker = limpiar_ticker(raw_ticker)
@@ -110,11 +111,8 @@ def webhook():
                 if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
                     enviar_mensaje(chat_id, f"📊 {nombre_legible}")
                     continue
-                    raw_ticker = datos.get("Ticker", "")
-                    ticker = limpiar_ticker(raw_ticker)
-                    nombre_legible = traducir_nombre(raw_ticker)
 
-                    if ticker in tickers_procesados:
+                if ticker in tickers_procesados:
                         continue
                     tickers_procesados.add(ticker)
 
