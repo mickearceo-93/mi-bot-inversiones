@@ -4,14 +4,14 @@ import sys
 import json
 import math
 import requests
+import yfinance as yf
 from flask import Flask, request
+from datetime import datetime, timedelta
 
 sys.stdout.reconfigure(line_buffering=True)
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
-NEWSAPI_KEY = os.getenv("NEWSAPI_KEY")
 REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversiones/main/portafolio_gbm_miguel.json"
 
 app = Flask(__name__)
@@ -25,32 +25,52 @@ def cargar_portafolio_privado():
     response.raise_for_status()
     return response.json()
 
-def obtener_noticias(ticker):
-    url = f"https://newsapi.org/v2/everything?q={ticker}&apiKey={NEWSAPI_KEY}&pageSize=1&sortBy=publishedAt&language=es"
-    response = requests.get(url)
-    if response.status_code == 200:
-        noticias = response.json().get("articles", [])
-        if noticias:
-            return f"📰 {noticias[0]['title']}"
-    return "📰 Sin noticias recientes."
+def estimar_fecha_compra(ticker, precio_compra):
+    try:
+        hist = yf.Ticker(ticker).history(period="5y")
+        closest = hist.iloc[(hist["Close"] - precio_compra).abs().argsort()[:1]]
+        if not closest.empty:
+            return closest.index[0].strftime("%d %b %Y")
+    except:
+        return "No disponible"
+    return "No disponible"
+
+def obtener_noticia_relevante(ticker):
+    try:
+        news = yf.Ticker(ticker).news
+        if news:
+            return "📰 " + news[0]["title"]
+    except:
+        pass
+    return "📰 Sin noticias disponibles"
 
 def obtener_proyecciones(ticker):
-    url = f"https://finnhub.io/api/v1/stock/recommendation?symbol={ticker}&token={FINNHUB_API_KEY}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        if data:
-            recomendacion = data[0]
-            corto = recomendacion.get("buy", 0)
-            mantener = recomendacion.get("hold", 0)
-            vender = recomendacion.get("sell", 0)
-            return f"Corto plazo: 🔼 {corto}, Mediano: 🤝 {mantener}, Largo: 🔽 {vender}"
-    return "📉 Sin proyecciones disponibles."
+    try:
+        tk = yf.Ticker(ticker)
+        info = tk.info
+        recs = tk.recommendations
+        corto, mediano, largo = "🤝", "🤝", "🤝"
 
-def sugerencia(var_dia, pm):
-    if var_dia < -3 or pm < -200:
+        if recs is not None and not recs.empty:
+            ultimos = recs.tail(5)["To Grade"].value_counts()
+            if "Buy" in ultimos:
+                corto = "🔼"
+            if "Hold" in ultimos:
+                mediano = "🤝"
+            if "Sell" in ultimos:
+                largo = "🔽"
+
+        target = info.get("targetMeanPrice", None)
+        if target:
+            return f"C: {corto}, M: {mediano}, L: {largo} | Objetivo: ${target:.2f}"
+    except:
+        return "📉 Proyecciones no disponibles"
+    return "📉 Proyecciones no disponibles"
+
+def sugerencia(pct):
+    if pct < -10:
         return "🔻 Sugerencia: VENDER"
-    elif var_dia > 2 and pm > 150:
+    elif pct > 10:
         return "🟢 Sugerencia: COMPRAR MÁS"
     else:
         return "🟡 Sugerencia: MANTENER"
@@ -76,28 +96,29 @@ def webhook():
             try:
                 portafolio = cargar_portafolio_privado()
                 for accion in portafolio:
-                    accion_limpia = {k.strip(): v for k, v in accion.items()}
-                    ticker = str(accion_limpia.get("Ticker", "")).strip()
-                    var_dia = float(accion_limpia.get("Var_Dia", 0) or 0)
-                    pm = float(accion_limpia.get("P_M", 0) or 0)
-                    precio = float(accion_limpia.get("Precio_mercado", 0) or 0)
-                    compra = float(accion_limpia.get("Costo_promedio", 0) or 0)
+                    datos = {k.strip(): v for k, v in accion.items()}
+                    ticker = str(datos.get("Ticker", "")).strip()
+                    compra = float(datos.get("Costo_promedio", 0) or 0)
+                    actual = float(datos.get("Precio_mercado", 0) or 0)
 
-                    if any(map(math.isnan, [pm, precio, var_dia])):
+                    if not ticker or compra == 0 or actual == 0:
                         continue
 
-                    noticias = obtener_noticias(ticker)
+                    ganancia = actual - compra
+                    pct = ((ganancia) / compra) * 100
+                    fecha_compra = estimar_fecha_compra(ticker, compra)
+                    noticia = obtener_noticia_relevante(ticker)
                     proy = obtener_proyecciones(ticker)
-                    accion_final = sugerencia(var_dia, pm)
+                    accion_final = sugerencia(pct)
 
-                    resumen = f"📊 {ticker}"
-                    resumen += f"1. Precio de compra: ${compra:.2f}"
-                    resumen += f"2. Variación hoy: {var_dia:.2f}%"
-                    resumen += f"3. Precio actual: ${precio:.2f}"
-                    resumen += f"4. Ganancia/Pérdida: ${pm:.2f}"
-                    resumen += f"5. {noticias}"
-                    resumen += f"6. 📈 Proyecciones: {proy}"
-                    resumen += f"7. {accion_final}"
+                    resumen = f"📊 {ticker}\n"
+                    resumen += f"1. Precio de compra: ${compra:.2f}\n"
+                    resumen += f"2. Fecha estimada de compra: {fecha_compra}\n"
+                    resumen += f"3. Precio actual: ${actual:.2f}\n"
+                    resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)\n"
+                    resumen += f"5. {noticia}\n"
+                    resumen += f"6. 📈 Proyecciones: {proy}\n"
+                    resumen += f"7. {accion_final}\n"
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
