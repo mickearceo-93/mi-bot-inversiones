@@ -44,7 +44,6 @@ def webhook():
                 portafolio = cargar_portafolio_privado()
                 resumen = "📊 Tu resumen de hoy:\n"
                 for accion in portafolio:
-                    # Limpieza de claves con espacios o nombres mal escritos
                     accion_limpia = {k.strip(): v for k, v in accion.items()}
                     ticker = str(accion_limpia.get("Ticker", "")).strip()
                     var_dia = float(accion_limpia.get("Var_Dia", 0) or 0)
@@ -53,6 +52,8 @@ def webhook():
                     resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
                 resumen = f"⚠️ Error al cargar el portafolio:\n{str(e)}"
+
+            print("📄 Resumen generado:", resumen)
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
