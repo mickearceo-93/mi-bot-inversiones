@@ -1,4 +1,3 @@
-
 import os
 import sys
 import json
@@ -48,10 +47,10 @@ def obtener_analisis_openai(nombre, ticker):
     prompt = (
         f"Dame un análisis financiero actualizado de {nombre} ({ticker}), "
         "incluyendo: 1. Noticias recientes relevantes, 2. Proyecciones de analistas, "
-        "3. Recomendación final (comprar, vender o mantener) como si fueras un asesor financiero profesional."
-        "todo esto que sea resumido y conciso neceisto solo informacion util para poder responder facilmente"
-        "evita poner mucha informacion porque si no me acabare mis tokens, y una cosa más la recomendacion final"
-        "que solo sea directa sin tanto cuento, solo pones o vender o manter o comprar"
+        "3. Recomendación final (comprar, vender o mantener) como si fueras un asesor financiero profesional. "
+        "TODO ESTO debe ser resumido y conciso, necesito solo información útil para poder decidir rápidamente. "
+        "Evita textos largos porque si no me acabaré mis tokens. "
+        "Y una cosa más: la recomendación final debe ser directa y clara. Solo responde COMPRAR, VENDER o MANTENER."
     )
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
     data = {
@@ -63,7 +62,7 @@ def obtener_analisis_openai(nombre, ticker):
     if response.status_code == 200:
         return response.json()["choices"][0]["message"]["content"]
     else:
-        return f"⚠️ Error OpenAI {response.status_code}: {response.text[:100]}..."
+        return f"⚠️ OpenAI error {response.status_code}: {response.text[:80]}..."
 
 def limpiar_ticker(raw):
     try:
@@ -103,21 +102,25 @@ def webhook():
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
                     ticker = limpiar_ticker(raw_ticker)
-                    nombre_legible = traducir_nombre(raw_ticker)
+                    nombre_legible = traducir_nombre(raw_ticker).upper()
 
-                    if ticker in tickers_procesados:
+                    if not raw_ticker or nombre_legible in ["EFECTIVO", "NAN", ""]:
                         continue
-                    tickers_procesados.add(ticker)
 
-                    compra = float(datos.get("Costo_promedio", 0) or 0)
-                    actual = float(datos.get("Precio_mercado", 0) or 0)
-                    if not raw_ticker or compra == 0 or actual == 0:
+                    if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
+                        enviar_mensaje(chat_id, f"📊 {nombre_legible}")
+                        continue
+
+                    try:
+                        compra = float(datos.get("Costo_promedio", 0) or 0)
+                        actual = float(datos.get("Precio_mercado", 0) or 0)
+                        if compra == 0 or actual == 0:
+                            continue
+                    except:
                         continue
 
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
-                    fecha_compra = estimar_fecha_compra(ticker, compra)
-                    #analisis = obtener_analisis_openai(nombre_legible, ticker)
 
                     fecha_compra = estimar_fecha_compra(ticker, compra)
                     if fecha_compra == "No disponible":
@@ -145,15 +148,14 @@ def webhook():
                     except:
                         titulos = 0
 
-                    resumen = f"📊 {nombre_legible}\n"
-                    resumen += f"1. Precio de compra: ${compra:.2f}\n"
-                    resumen += f"2. Fecha estimada de compra: {fecha_compra}\n"
-                    resumen += f"3. Precio actual: ${actual:.2f}\n"
-                    resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)\n"
-                    resumen += f"5. Títulos comprados: {titulos}\n"
-                    resumen += f"6. Ganancia total estimada: ${ganancia * titulos:.2f}\n"
-                   # resumen += f"7. Noticias y Recomendaciones: {analisis}"
-
+                    resumen = f"📊 {nombre_legible}"
+                    resumen += f"1. Precio de compra: ${compra:.2f}"
+                    resumen += f"2. Fecha estimada de compra: {fecha_compra}"
+                    resumen += f"3. Precio actual: ${actual:.2f}"
+                    resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)"
+                    resumen += f"5. Títulos comprados: {titulos}"
+                    resumen += f"6. Ganancia total estimada: ${ganancia * titulos:.2f}"
+                    #resumen += f"7. Noticias y Recomendaciones: {analisis}"
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
                 enviar_mensaje(chat_id, f"⚠️ Error procesando tu portafolio:\n{str(e)}")
