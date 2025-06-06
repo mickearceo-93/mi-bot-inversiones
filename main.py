@@ -41,8 +41,7 @@ def webhook():
         elif texto == "/resumen":
             try:
                 portafolio = cargar_portafolio_privado()
-                resumen = "📊 Tu resumen de hoy:
-"
+                resumen = "📊 Tu resumen de hoy:"
                 for accion in portafolio:
                     ticker = accion.get("Ticker", "")
                     var_dia = accion.get("Var_Dia", 0)
