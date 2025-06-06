@@ -16,6 +16,24 @@ REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversion
 
 app = Flask(__name__)
 
+# Mapeo personalizado de tickers y nombres
+TICKER_MAP = {
+    "1211 N": ("1211.HK", "BYD"),
+    "1810 N": ("1810.HK", "Xiaomi"),
+    "SHOP N": ("SHOP", "Shopify"),
+    "PYPL *": ("PYPL", "PayPal"),
+    "AMZN *": ("AMZN", "Amazon"),
+    "AAPL *": ("AAPL", "Apple"),
+    "ABNB *": ("ABNB", "Airbnb"),
+    "NVDA *": ("NVDA", "Nvidia"),
+    "OXY1 *": ("OXY", "Occidental Petroleum"),
+    "NU N": ("NU", "Nu Holdings"),
+    "BBVA *": ("BBVA.MX", "BBVA"),
+    "CEMEX CPO": ("CEMEXCPO.MX", "Cemex"),
+    "GFINBUR O": ("GFINBURO.MX", "Inbursa"),
+    "ALSEA *": ("ALSEA.MX", "Alsea")
+}
+
 def cargar_portafolio_privado():
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
@@ -28,6 +46,8 @@ def cargar_portafolio_privado():
 def estimar_fecha_compra(ticker, precio_compra):
     try:
         hist = yf.Ticker(ticker).history(period="5y")
+        hist = hist[hist.index >= "2025-01-01"]
+        hist = hist.dropna(subset=["Close"])
         closest = hist.iloc[(hist["Close"] - precio_compra).abs().argsort()[:1]]
         if not closest.empty:
             return closest.index[0].strftime("%d %b %Y")
@@ -102,12 +122,17 @@ def webhook():
                 for accion in portafolio:
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
-                    ticker = limpiar_ticker(raw_ticker)
                     compra = float(datos.get("Costo_promedio", 0) or 0)
                     actual = float(datos.get("Precio_mercado", 0) or 0)
 
-                    if not ticker or compra == 0 or actual == 0:
+                    if not raw_ticker or compra == 0 or actual == 0:
                         continue
+
+                    if raw_ticker in TICKER_MAP:
+                        ticker, nombre = TICKER_MAP[raw_ticker]
+                    else:
+                        ticker = limpiar_ticker(raw_ticker)
+                        nombre = ticker
 
                     try:
                         info = yf.Ticker(ticker).info
@@ -125,7 +150,7 @@ def webhook():
                     proy = obtener_proyecciones(ticker)
                     accion_final = sugerencia(pct)
 
-                    resumen = f"📊 {ticker}\n"
+                    resumen = f"📊 {nombre}\n"
                     resumen += f"1. Precio de compra: ${compra:.2f}\n"
                     resumen += f"2. Fecha estimada de compra: {fecha_compra}\n"
                     resumen += f"3. Precio actual: ${actual:.2f}\n"
