@@ -49,8 +49,7 @@ def webhook():
                     simbolo = "📈" if var_dia >= 0 else "📉"
                     resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
-                resumen = f"⚠️ Error al cargar el portafolio:
-{str(e)}"
+                resumen = f"⚠️ Error al cargar el portafolio:{str(e)}"
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
