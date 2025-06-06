@@ -36,7 +36,7 @@ def enviar_mensaje(chat_id, texto):
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     datos = request.get_json()
-    print("📥 Webhook recibido:", datos)  # Agregado para verificar llegada desde Telegram
+    print("📥 Webhook recibido:", datos)
     if "message" in datos:
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "")
@@ -56,13 +56,16 @@ def webhook():
                     resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
                 resumen = f"⚠️ Error al cargar el portafolio:\n{str(e)}"
-
             print("📄 Resumen generado:\n", resumen)
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
-    return {"ok": True}  # 🔁 Garantiza respuesta inmediata a Telegram
+    return {"ok": True}
 
 @app.route('/')
 def health():
     return "Bot corriendo correctamente ✅"
+
+# 🔥 ESTA LÍNEA ES CLAVE PARA FLASK EN RENDER
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
