@@ -104,7 +104,7 @@ def webhook():
                     ticker = limpiar_ticker(raw_ticker)
                     nombre_legible = traducir_nombre(raw_ticker).upper()
 
-                    if not raw_ticker or nombre_legible in ["EFECTIVO", "NAN", ""]:
+                    if not raw_ticker or nombre_legible.upper() in ["EFECTIVO", "NAN", ""] or "EFECTIVO" in nombre_legible.upper():
                         continue
 
                     if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
