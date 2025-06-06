@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import math
 import requests
 import yfinance as yf
 from flask import Flask, request
@@ -99,12 +100,17 @@ def webhook():
                 portafolio = cargar_portafolio_privado()
                 tickers_procesados = set()
                 for accion in portafolio:
+                tickers_procesados = set()
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
                     ticker = limpiar_ticker(raw_ticker)
                     nombre_legible = traducir_nombre(raw_ticker).upper()
+                    if ticker in tickers_procesados:
+                        continue
+                    tickers_procesados.add(ticker)
 
                     if not raw_ticker or nombre_legible in ["EFECTIVO", "NAN", ""]:
+                    if not raw_ticker or nombre_legible in ["EFECTIVO", "NAN", ""] or "EFECTIVO" in nombre_legible:
                         continue
 
                     if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
@@ -115,6 +121,8 @@ def webhook():
                         compra = float(datos.get("Costo_promedio", 0) or 0)
                         actual = float(datos.get("Precio_mercado", 0) or 0)
                         if compra == 0 or actual == 0:
+                        if any(math.isnan(x) for x in [compra, actual]):
+                            continue
                             continue
                     except:
                         continue
