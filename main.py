@@ -1,8 +1,11 @@
 
 import os
+import sys
 import json
 import requests
 from flask import Flask, request
+
+sys.stdout.reconfigure(line_buffering=True)
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
@@ -53,7 +56,7 @@ def webhook():
             except Exception as e:
                 resumen = f"⚠️ Error al cargar el portafolio:\n{str(e)}"
 
-            print("📄 Resumen generado:", resumen)
+            print("📄 Resumen generado:\n", resumen)
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
