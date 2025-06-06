@@ -17,7 +17,7 @@ def cargar_portafolio_privado():
     }
     response = requests.get(REPO_RAW_URL, headers=headers)
     print("🔍 GitHub response code:", response.status_code)
-    print("🔍 GitHub response text:", response.text[:100])
+    print("🔍 GitHub response text (start):", response.text[:150])
     response.raise_for_status()
     return response.json()
 
@@ -27,6 +27,7 @@ def enviar_mensaje(chat_id, texto):
         "chat_id": chat_id,
         "text": texto
     }
+    print("📤 Enviando mensaje:", payload)
     requests.post(url, json=payload)
 
 @app.route(f"/{TOKEN}", methods=["POST"])
@@ -41,7 +42,7 @@ def webhook():
         elif texto == "/resumen":
             try:
                 portafolio = cargar_portafolio_privado()
-                resumen = "📊 Tu resumen de hoy:"
+                resumen = "📊 Tu resumen de hoy:\n"
                 for accion in portafolio:
                     ticker = accion.get("Ticker", "")
                     var_dia = accion.get("Var_Dia", 0)
@@ -49,7 +50,7 @@ def webhook():
                     simbolo = "📈" if var_dia >= 0 else "📉"
                     resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
-                resumen = f"⚠️ Error al cargar el portafolio:{str(e)}"
+                resumen = f"⚠️ Error al cargar el portafolio:\n{str(e)}"
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
