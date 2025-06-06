@@ -3,8 +3,8 @@ import os
 import sys
 import json
 import requests
-import yfinance as yf
 from flask import Flask, request
+import math
 
 sys.stdout.reconfigure(line_buffering=True)
 
@@ -21,24 +21,9 @@ def cargar_portafolio_privado():
     }
     response = requests.get(REPO_RAW_URL, headers=headers)
     print("🔍 GitHub response code:", response.status_code)
+    print("🔍 GitHub response text (start):", response.text[:150])
     response.raise_for_status()
     return response.json()
-
-def obtener_datos_yahoo(ticker):
-    try:
-        info = yf.Ticker(ticker).info
-        return {
-            "precio_actual": info.get("regularMarketPrice", 0),
-            "variacion_dia": info.get("regularMarketChangePercent", 0),
-            "nombre": info.get("shortName", ticker)
-        }
-    except Exception as e:
-        print(f"⚠️ Error al obtener datos de {ticker}: {str(e)}")
-        return {
-            "precio_actual": 0,
-            "variacion_dia": 0,
-            "nombre": ticker
-        }
 
 def enviar_mensaje(chat_id, texto):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -58,26 +43,27 @@ def webhook():
         texto = datos["message"].get("text", "")
 
         if texto == "/start":
-            enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio con datos en tiempo real.")
+            enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
         elif texto == "/resumen":
             try:
                 portafolio = cargar_portafolio_privado()
-                resumen = "📊 Tu resumen de hoy:\n"
+                resumen = "📊 Tu resumen de hoy:
+"
                 for accion in portafolio:
                     accion_limpia = {k.strip(): v for k, v in accion.items()}
                     ticker = str(accion_limpia.get("Ticker", "")).strip()
-                    precio_medio = float(accion_limpia.get("P_M", 0) or 0)
+                    var_dia = float(accion_limpia.get("Var_Dia", 0) or 0)
+                    pm = float(accion_limpia.get("P_M", 0) or 0)
+                    precio = float(accion_limpia.get("Precio_mercado", 0) or 0)
 
-                    datos = obtener_datos_yahoo(ticker)
-                    precio_actual = datos["precio_actual"]
-                    variacion = datos["variacion_dia"]
-                    nombre = datos["nombre"]
-                    ganancia = precio_actual - precio_medio
-                    simbolo = "📈" if ganancia >= 0 else "📉"
+                    # Evitar mostrar NaN
+                    if any(map(math.isnan, [pm, precio, var_dia])):
+                        continue
 
-                    resumen += f"{simbolo} {ticker} ({nombre}): {variacion:.2f}% hoy | Precio actual: ${precio_actual:.2f} | Gan/Pérdida: ${ganancia:.2f}\n"
+                    simbolo = "📈" if var_dia >= 0 else "📉"
+                    resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Precio actual: ${precio:.2f} | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
-                resumen = f"⚠️ Error al generar resumen:\n{str(e)}"
+                resumen = f"⚠️ Error al cargar el portafolio:\n{str(e)}"
             print("📄 Resumen generado:\n", resumen)
             enviar_mensaje(chat_id, resumen)
         else:
