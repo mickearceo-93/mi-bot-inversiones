@@ -99,20 +99,13 @@ def webhook():
             try:
                 portafolio = cargar_portafolio_privado()
                 tickers_procesados = set()
-                
-            for accion in portafolio:
-                datos = {k.strip(): v for k, v in accion.items()}
-                raw_ticker = datos.get("Ticker", "")
-                ticker = limpiar_ticker(raw_ticker)
-                nombre_legible = traducir_nombre(raw_ticker).upper()
+                for accion in portafolio:
+                    datos = {k.strip(): v for k, v in accion.items()}
+                    raw_ticker = datos.get("Ticker", "")
+                    ticker = limpiar_ticker(raw_ticker)
+                    nombre_legible = traducir_nombre(raw_ticker)
 
-                if nombre_legible in ["EFECTIVO"]:
-                    continue
-                if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
-                    enviar_mensaje(chat_id, f"📊 {nombre_legible}")
-                    continue
-
-                if ticker in tickers_procesados:
+                    if ticker in tickers_procesados:
                         continue
                     tickers_procesados.add(ticker)
 
@@ -159,7 +152,7 @@ def webhook():
                     resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)\n"
                     resumen += f"5. Títulos comprados: {titulos}\n"
                     resumen += f"6. Ganancia total estimada: ${ganancia * titulos:.2f}\n"
-                    #resumen += f"7. Noticias y Recomendaciones: {analisis}"
+                   # resumen += f"7. Noticias y Recomendaciones: {analisis}"
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
