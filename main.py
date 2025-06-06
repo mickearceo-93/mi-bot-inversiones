@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import math
 import requests
 import yfinance as yf
 from flask import Flask, request
@@ -113,13 +112,15 @@ def webhook():
                         continue
 
                     try:
+                    try:
                         compra = float(datos.get("Costo_promedio", 0) or 0)
                         actual = float(datos.get("Precio_mercado", 0) or 0)
                         if compra == 0 or actual == 0:
+                            continue
                         if any(math.isnan(x) for x in [compra, actual]):
                             continue
-                        continue
                     except:
+                        continue
                         continue
 
                     ganancia = actual - compra
