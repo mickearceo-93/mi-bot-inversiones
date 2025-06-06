@@ -1,3 +1,4 @@
+
 import os
 import sys
 import json
@@ -13,6 +14,12 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversiones/main/portafolio_gbm_miguel.json"
 
+ticker_alias = {
+    "1211 N": "BYD",
+    "1810 N": "XIAOMI",
+    "OXY1 *": "OXY"
+}
+
 tickers_procesados = set()
 app = Flask(__name__)
 
@@ -27,6 +34,8 @@ def estimar_fecha_compra(ticker, precio_compra):
         hist = yf.Ticker(ticker).history(period="5y")
         hist = hist[hist.index >= "2025-01-01"]
         hist = hist.dropna(subset=["Close"])
+        if hist.empty:
+            return "No disponible"
         closest = hist.iloc[(hist["Close"] - precio_compra).abs().argsort()[:1]]
         if not closest.empty:
             return closest.index[0].strftime("%d %b %Y")
@@ -58,6 +67,10 @@ def obtener_analisis_openai(nombre, ticker):
 def limpiar_ticker(raw):
     return raw.strip().split()[0].replace("*", "").replace("$", "")
 
+def traducir_nombre(raw):
+    base = raw.strip().replace("*", "")
+    return ticker_alias.get(base, base)
+
 def enviar_mensaje(chat_id, texto):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {"chat_id": chat_id, "text": texto}
@@ -78,25 +91,30 @@ def webhook():
                 for accion in portafolio:
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
-                    nombre = raw_ticker
                     ticker = limpiar_ticker(raw_ticker)
+                    nombre_legible = traducir_nombre(raw_ticker)
+
                     if ticker in tickers_procesados:
                         continue
                     tickers_procesados.add(ticker)
+
                     compra = float(datos.get("Costo_promedio", 0) or 0)
                     actual = float(datos.get("Precio_mercado", 0) or 0)
                     if not raw_ticker or compra == 0 or actual == 0:
                         continue
+
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
                     fecha_compra = estimar_fecha_compra(ticker, compra)
-                    analisis = obtener_analisis_openai(nombre, ticker)
-                    resumen = f"📊 {nombre}\n"
+                    analisis = obtener_analisis_openai(nombre_legible, ticker)
+
+                    resumen = f"📊 {nombre_legible}\n"
                     resumen += f"1. Precio de compra: ${compra:.2f}\n"
                     resumen += f"2. Fecha estimada de compra: {fecha_compra}\n"
                     resumen += f"3. Precio actual: ${actual:.2f}\n"
                     resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)\n"
-                    resumen += f"5. Noticias y Recomendaciones: {analisis}"
+                    #resumen += f"5. Noticias y Recomendaciones: {analisis}"
+
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
                 enviar_mensaje(chat_id, f"⚠️ Error procesando tu portafolio:\n{str(e)}")
