@@ -44,9 +44,11 @@ def webhook():
                 portafolio = cargar_portafolio_privado()
                 resumen = "📊 Tu resumen de hoy:\n"
                 for accion in portafolio:
-                    ticker = accion.get("Ticker", "")
-                    var_dia = accion.get("Var_Dia", 0)
-                    pm = accion.get("P_M", 0)
+                    # Limpieza de claves con espacios o nombres mal escritos
+                    accion_limpia = {k.strip(): v for k, v in accion.items()}
+                    ticker = str(accion_limpia.get("Ticker", "")).strip()
+                    var_dia = float(accion_limpia.get("Var_Dia", 0) or 0)
+                    pm = float(accion_limpia.get("P_M", 0) or 0)
                     simbolo = "📈" if var_dia >= 0 else "📉"
                     resumen += f"{simbolo} {ticker}: {var_dia:.2f}% hoy | Gan/Pérdida: ${pm:.2f}\n"
             except Exception as e:
