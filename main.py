@@ -36,6 +36,7 @@ def enviar_mensaje(chat_id, texto):
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
     datos = request.get_json()
+    print("📥 Webhook recibido:", datos)  # Agregado para verificar llegada desde Telegram
     if "message" in datos:
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "")
@@ -60,7 +61,7 @@ def webhook():
             enviar_mensaje(chat_id, resumen)
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
-    return {"ok": True}
+    return {"ok": True}  # 🔁 Garantiza respuesta inmediata a Telegram
 
 @app.route('/')
 def health():
