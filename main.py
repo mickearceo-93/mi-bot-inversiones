@@ -1,3 +1,4 @@
+
 import os
 import sys
 import json
@@ -5,6 +6,8 @@ import requests
 import yfinance as yf
 from flask import Flask, request
 from datetime import datetime
+import threading
+from threading import Timer
 
 sys.stdout.reconfigure(line_buffering=True)
 
@@ -14,6 +17,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversiones/main/portafolio_gbm_miguel.json"
 
 mensajes_procesados = set()
+mensajes_lock = threading.Lock()
 
 ticker_alias = {
     "1211 N": "BYD",
@@ -22,6 +26,12 @@ ticker_alias = {
 }
 
 app = Flask(__name__)
+
+def limpiar_mensaje(msg_id, delay=60):
+    def remover():
+        with mensajes_lock:
+            mensajes_procesados.discard(msg_id)
+    Timer(delay, remover).start()
 
 def cargar_portafolio_privado():
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
@@ -87,10 +97,12 @@ def webhook():
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "").strip()
 
-        if msg_id in mensajes_procesados:
-            print(f"⏭ Ya procesado message_id={msg_id}")
-            return {"ok": True}
-        mensajes_procesados.add(msg_id)
+        with mensajes_lock:
+            if msg_id in mensajes_procesados:
+                print(f"⏭ Ya procesado message_id={msg_id}")
+                return {"ok": True}
+            mensajes_procesados.add(msg_id)
+            limpiar_mensaje(msg_id)
 
         if texto == "/start":
             enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
@@ -137,16 +149,13 @@ def webhook():
                         }
                         fecha_compra = fechas_manual.get(ticker.upper(), "No disponible")
 
-                    #analisis = obtener_analisis_openai(nombre_legible, ticker)
-
                     resumen = f"📊 {nombre_legible}"
-                    resumen += f"1. Precio de compra: ${compra:.2f}"
-                    resumen += f"2. Fecha estimada de compra: {fecha_compra}"
-                    resumen += f"3. Precio actual: ${actual:.2f}"
-                    resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)"
-                    resumen += f"5. Títulos comprados: {titulos}"
-                    resumen += f"6. Ganancia total estimada: ${ganancia * titulos:.2f}"
-                    #resumen += f"7. Noticias y Recomendaciones: {analisis}"
+                    resumen += f"\n1. Precio de compra: ${compra:.2f}"
+                    resumen += f"\n2. Fecha estimada de compra: {fecha_compra}"
+                    resumen += f"\n3. Precio actual: ${actual:.2f}"
+                    resumen += f"\n4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)"
+                    resumen += f"\n5. Títulos comprados: {titulos}"
+                    resumen += f"\n6. Ganancia total estimada: ${ganancia * titulos:.2f}"
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
