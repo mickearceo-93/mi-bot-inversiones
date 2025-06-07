@@ -5,7 +5,7 @@ import json
 import requests
 import yfinance as yf
 from flask import Flask, request
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 from threading import Timer
 
@@ -18,6 +18,7 @@ REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversion
 
 mensajes_procesados = set()
 mensajes_lock = threading.Lock()
+ultimo_procesado = {}
 
 ticker_alias = {
     "1211 N": "BYD",
@@ -33,14 +34,19 @@ def limpiar_mensaje(msg_id, delay=60):
             mensajes_procesados.discard(msg_id)
     Timer(delay, remover).start()
 
+def es_mensaje_reciente(chat_id, limite_segundos=60):
+    ahora = datetime.now()
+    if chat_id in ultimo_procesado:
+        if (ahora - ultimo_procesado[chat_id]).total_seconds() < limite_segundos:
+            return True
+    ultimo_procesado[chat_id] = ahora
+    return False
+
 def cargar_portafolio_privado():
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
     response = requests.get(REPO_RAW_URL, headers=headers)
     response.raise_for_status()
     return response.json()
-
-def estimar_fecha_compra(ticker, precio_compra):
-    return "No disponible"
 
 def obtener_analisis_openai(nombre, ticker):
     prompt = (
@@ -78,18 +84,20 @@ def enviar_mensaje(chat_id, texto):
     payload = {"chat_id": chat_id, "text": texto}
     requests.post(url, json=payload)
 
-@app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    datos = request.get_json()
+def procesar_mensaje(datos):
     if "message" in datos:
         msg_id = datos["message"]["message_id"]
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "").strip()
 
+        if es_mensaje_reciente(chat_id):
+            print("🔁 Mensaje ignorado por duplicado reciente.")
+            return
+
         with mensajes_lock:
             if msg_id in mensajes_procesados:
                 print(f"⏭ Ya procesado message_id={msg_id}")
-                return {"ok": True}
+                return
             mensajes_procesados.add(msg_id)
             limpiar_mensaje(msg_id)
 
@@ -152,6 +160,11 @@ def webhook():
                 enviar_mensaje(chat_id, f"⚠️ Error procesando tu portafolio:\n{str(e)}")
         else:
             enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
+
+@app.route(f"/{TOKEN}", methods=["POST"])
+def webhook():
+    datos = request.get_json()
+    threading.Thread(target=procesar_mensaje, args=(datos,)).start()
     return {"ok": True}
 
 @app.route('/')
