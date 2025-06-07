@@ -5,7 +5,7 @@ import json
 import requests
 import yfinance as yf
 from flask import Flask, request
-from datetime import datetime, timedelta
+from datetime import datetime
 import threading
 from threading import Timer
 
@@ -18,7 +18,6 @@ REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversion
 
 mensajes_procesados = set()
 mensajes_lock = threading.Lock()
-ultimo_procesado = {}
 
 ticker_alias = {
     "1211 N": "BYD",
@@ -33,14 +32,6 @@ def limpiar_mensaje(msg_id, delay=60):
         with mensajes_lock:
             mensajes_procesados.discard(msg_id)
     Timer(delay, remover).start()
-
-def es_mensaje_reciente(chat_id, limite_segundos=60):
-    ahora = datetime.now()
-    if chat_id in ultimo_procesado:
-        if (ahora - ultimo_procesado[chat_id]).total_seconds() < limite_segundos:
-            return True
-    ultimo_procesado[chat_id] = ahora
-    return False
 
 def cargar_portafolio_privado():
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
@@ -89,10 +80,6 @@ def procesar_mensaje(datos):
         msg_id = datos["message"]["message_id"]
         chat_id = datos["message"]["chat"]["id"]
         texto = datos["message"].get("text", "").strip()
-
-        if es_mensaje_reciente(chat_id):
-            print("🔁 Mensaje ignorado por duplicado reciente.")
-            return
 
         with mensajes_lock:
             if msg_id in mensajes_procesados:
