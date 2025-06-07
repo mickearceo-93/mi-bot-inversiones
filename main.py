@@ -117,6 +117,7 @@ def webhook():
                     try:
                         compra = float(datos.get("Costo_promedio", 0) or 0)
                         actual = float(datos.get("Precio_mercado", 0) or 0)
+                        titulos = int(datos.get("Titulos", 0) or 0)
                     except:
                         continue
 
@@ -126,6 +127,16 @@ def webhook():
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
                     fecha_compra = estimar_fecha_compra(ticker, compra)
+                    if fecha_compra == "No disponible":
+                        fechas_manual = {
+                            "AAPL": "15 Ene 2025", "ABNB": "22 Feb 2025", "AMZN": "10 Ene 2025",
+                            "NU": "12 Mar 2025", "NVDA": "05 Ene 2025", "OXY": "28 Feb 2025",
+                            "PYPL": "19 Mar 2025", "SHOP": "07 Mar 2025", "BYD": "10 Mar 2025",
+                            "XIAOMI": "14 Feb 2025", "ALSEA": "13 Ene 2025", "BBVA": "17 Ene 2025",
+                            "CEMEX": "20 Feb 2025", "GFINBUR": "26 Feb 2025"
+                        }
+                        fecha_compra = fechas_manual.get(ticker.upper(), "No disponible")
+
                     #analisis = obtener_analisis_openai(nombre_legible, ticker)
 
                     resumen = f"📊 {nombre_legible}"
