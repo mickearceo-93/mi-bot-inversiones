@@ -71,6 +71,8 @@ def limpiar_ticker(raw):
         return str(raw)
 
 def traducir_nombre(raw):
+    base = str(raw).strip().replace("*", "").upper()
+    return ticker_alias.get(base, base)
     base = str(raw).strip().replace("*", "")
     return ticker_alias.get(base, base)
 
@@ -102,7 +104,7 @@ def webhook():
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
                     ticker = limpiar_ticker(raw_ticker)
-                    nombre_legible = traducir_nombre(raw_ticker).upper()
+                    nombre_legible = traducir_nombre(raw_ticker)
 
                     if not raw_ticker or nombre_legible.upper() in ["EFECTIVO", "NAN", ""] or "EFECTIVO" in nombre_legible.upper():
                         continue
