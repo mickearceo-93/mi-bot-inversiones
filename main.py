@@ -103,10 +103,15 @@ def webhook():
                 for accion in portafolio:
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
+                    print(f"TICKER ORIGINAL: '{raw_ticker}'")
                     ticker = limpiar_ticker(raw_ticker)
+                    print(f"TICKER LIMPIO: '{ticker}'")
                     nombre_legible = traducir_nombre(raw_ticker)
+                    print(f"NOMBRE LEGIBLE: '{nombre_legible}'")
 
                     if not raw_ticker or nombre_legible.upper() in ["EFECTIVO", "NAN", ""] or "EFECTIVO" in nombre_legible.upper():
+                        print(f"⛔ FILTRADO POR NOMBRE LEGIBLE: '{nombre_legible}'")
+                        continue
                         continue
 
                     if nombre_legible == "MERCADO DE CAPITALES NACIONAL":
