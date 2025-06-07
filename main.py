@@ -90,7 +90,8 @@ def webhook():
         texto = datos["message"].get("text", "").strip()
 
         if msg_id in mensajes_procesados:
-            print(f"⏭ Ya procesado message_id={msg_id}")
+            sys.stdout.write(f"⏭ Ya procesado message_id={msg_id}" + '\n')
+            sys.stdout.flush()
             return {"ok": True}
         mensajes_procesados.add(msg_id)
 
@@ -103,14 +104,18 @@ def webhook():
                 for accion in portafolio:
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
-                    print(f"TICKER ORIGINAL: '{raw_ticker}'")
+                    sys.stdout.write(f"TICKER ORIGINAL: '{raw_ticker}'" + '\n')
+                    sys.stdout.flush()
                     ticker = limpiar_ticker(raw_ticker)
-                    print(f"TICKER LIMPIO: '{ticker}'")
+                    sys.stdout.write(f"TICKER LIMPIO: '{ticker}'" + '\n')
+                    sys.stdout.flush()
                     nombre_legible = traducir_nombre(raw_ticker)
-                    print(f"NOMBRE LEGIBLE: '{nombre_legible}'")
+                    sys.stdout.write(f"NOMBRE LEGIBLE: '{nombre_legible}'" + '\n')
+                    sys.stdout.flush()
 
                     if not raw_ticker or nombre_legible.upper() in ["EFECTIVO", "NAN", ""] or "EFECTIVO" in nombre_legible.upper():
-                        print(f"⛔ FILTRADO POR NOMBRE LEGIBLE: '{nombre_legible}'")
+                        sys.stdout.write(f"⛔ FILTRADO POR NOMBRE LEGIBLE: '{nombre_legible}'" + '\n')
+                        sys.stdout.flush()
                         continue
                         continue
 
