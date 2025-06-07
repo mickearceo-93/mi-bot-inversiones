@@ -128,12 +128,14 @@ def webhook():
                     fecha_compra = estimar_fecha_compra(ticker, compra)
                     #analisis = obtener_analisis_openai(nombre_legible, ticker)
 
-                    resumen = f"📊 {nombre_legible}\n"
-                    resumen += f"1. Precio de compra: ${compra:.2f}\n"
-                    resumen += f"2. Fecha estimada de compra: {fecha_compra}\n"
-                    resumen += f"3. Precio actual: ${actual:.2f}\n"
-                    resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)\n"
-                    #resumen += f"5. Noticias y Recomendaciones: {analisis}"
+                    resumen = f"📊 {nombre_legible}"
+                    resumen += f"1. Precio de compra: ${compra:.2f}"
+                    resumen += f"2. Fecha estimada de compra: {fecha_compra}"
+                    resumen += f"3. Precio actual: ${actual:.2f}"
+                    resumen += f"4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)"
+                    resumen += f"5. Títulos comprados: {titulos}"
+                    resumen += f"6. Ganancia total estimada: ${ganancia * titulos:.2f}"
+                    #resumen += f"7. Noticias y Recomendaciones: {analisis}"
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
