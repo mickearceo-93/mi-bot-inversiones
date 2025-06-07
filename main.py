@@ -40,7 +40,10 @@ def cargar_portafolio_privado():
     response.raise_for_status()
     return response.json()
 
-def obtener_analisis_openai(nombre, ticker):
+def obtener_analisis_openai(nombre, ticker, chat_id):
+    if cancelaciones_activas.get(chat_id):
+        return "⏹ Análisis cancelado por el usuario."
+
     prompt = (
         f"Dame un análisis financiero actualizado de {nombre} ({ticker}), "
         "incluyendo: 1. Noticias recientes relevantes, 2. Proyecciones de analistas, "
@@ -55,11 +58,19 @@ def obtener_analisis_openai(nombre, ticker):
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.7
     }
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=data)
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
-    else:
-        return f"⚠️ OpenAI error {response.status_code}: {response.text[:80]}..."
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=15
+        )
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"]
+        else:
+            return f"⚠️ OpenAI error {response.status_code}: {response.text[:80]}..."
+    except requests.exceptions.Timeout:
+        return "⚠️ Tiempo de espera agotado al solicitar análisis."
 
 def limpiar_ticker(raw):
     try:
@@ -99,7 +110,7 @@ def procesar_mensaje(datos):
             return
 
         if texto == "/resumen":
-            cancelaciones_activas.pop(chat_id, None)  # Limpiar cancelación previa
+            cancelaciones_activas.pop(chat_id, None)
             try:
                 portafolio = cargar_portafolio_privado()
                 tickers_procesados = set()
@@ -149,7 +160,7 @@ def procesar_mensaje(datos):
                         enviar_mensaje(chat_id, "⏹ Operación cancelada.")
                         return
 
-                    analisis = obtener_analisis_openai(nombre_legible, ticker)
+                    analisis = obtener_analisis_openai(nombre_legible, ticker, chat_id)
 
                     if cancelaciones_activas.get(chat_id):
                         enviar_mensaje(chat_id, "⏹ Operación cancelada.")
