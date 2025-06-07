@@ -40,17 +40,6 @@ def cargar_portafolio_privado():
     return response.json()
 
 def estimar_fecha_compra(ticker, precio_compra):
-    try:
-        hist = yf.Ticker(ticker).history(period="5y")
-        hist = hist[hist.index >= "2025-01-01"]
-        hist = hist.dropna(subset=["Close"])
-        if hist.empty:
-            return "No disponible"
-        closest = hist.iloc[(hist["Close"] - precio_compra).abs().argsort()[:1]]
-        if not closest.empty:
-            return closest.index[0].strftime("%d %b %Y")
-    except:
-        return "No disponible"
     return "No disponible"
 
 def obtener_analisis_openai(nombre, ticker):
@@ -138,16 +127,16 @@ def webhook():
 
                     ganancia = actual - compra
                     pct = ((ganancia) / compra) * 100
-                    fecha_compra = estimar_fecha_compra(ticker, compra)
-                    if fecha_compra == "No disponible":
-                        fechas_manual = {
-                            "AAPL": "15 Ene 2025", "ABNB": "22 Feb 2025", "AMZN": "10 Ene 2025",
-                            "NU": "12 Mar 2025", "NVDA": "05 Ene 2025", "OXY": "28 Feb 2025",
-                            "PYPL": "19 Mar 2025", "SHOP": "07 Mar 2025", "BYD": "10 Mar 2025",
-                            "XIAOMI": "14 Feb 2025", "ALSEA": "13 Ene 2025", "BBVA": "17 Ene 2025",
-                            "CEMEX": "20 Feb 2025", "GFINBUR": "26 Feb 2025"
-                        }
-                        fecha_compra = fechas_manual.get(ticker.upper(), "No disponible")
+
+                    fechas_manual = {
+                        "AAPL": "15 Ene 2025", "ABNB": "22 Feb 2025", "AMZN": "10 Ene 2025",
+                        "NU": "12 Mar 2025", "NVDA": "05 Ene 2025", "OXY": "03 Jun 2025",
+                        "PYPL": "19 Mar 2025", "SHOP": "07 Mar 2025", "BYD": "12 May 2025",
+                        "XIAOMI": "26 May 2025", "ALSEA": "13 Ene 2025", "BBVA": "17 Ene 2025",
+                        "CEMEX": "20 Feb 2025", "GFINBUR": "26 Feb 2025"
+                    }
+                    fecha_compra = fechas_manual.get(ticker.upper(), "No disponible")
+                    analisis = obtener_analisis_openai(nombre_legible, ticker)
 
                     resumen = f"📊 {nombre_legible}"
                     resumen += f"\n1. Precio de compra: ${compra:.2f}"
@@ -156,6 +145,7 @@ def webhook():
                     resumen += f"\n4. Ganancia: ${ganancia:.2f} ({pct:.2f}%)"
                     resumen += f"\n5. Títulos comprados: {titulos}"
                     resumen += f"\n6. Ganancia total estimada: ${ganancia * titulos:.2f}"
+                    resumen += f"\n7. Análisis financiero:\n{analisis}"
 
                     enviar_mensaje(chat_id, resumen)
             except Exception as e:
