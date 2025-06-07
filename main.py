@@ -124,6 +124,8 @@ def webhook():
                         continue
 
                     try:
+                        sys.stdout.write(f"💵 DATOS DE PRECIOS PARA {nombre_legible}: Costo={datos.get('Costo_promedio')} | Mercado={datos.get('Precio_mercado')}\n")
+                        sys.stdout.flush()
                         compra = float(datos.get("Costo_promedio", 0) or 0)
                         actual = float(datos.get("Precio_mercado", 0) or 0)
                         if compra == 0 or actual == 0:
