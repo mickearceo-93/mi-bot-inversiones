@@ -18,6 +18,7 @@ REPO_RAW_URL = "https://raw.githubusercontent.com/mickearceo-93/mi-bot-inversion
 
 mensajes_procesados = set()
 mensajes_lock = threading.Lock()
+cancelaciones_activas = {}
 
 ticker_alias = {
     "1211 N": "BYD",
@@ -88,13 +89,25 @@ def procesar_mensaje(datos):
             mensajes_procesados.add(msg_id)
             limpiar_mensaje(msg_id)
 
+        if texto == "/cancelar":
+            cancelaciones_activas[chat_id] = True
+            enviar_mensaje(chat_id, "❌ Se ha cancelado la operación en curso.")
+            return
+
         if texto == "/start":
             enviar_mensaje(chat_id, "👋 ¡Bienvenido Miguel! Usa /resumen para ver tu portafolio.")
-        elif texto == "/resumen":
+            return
+
+        if texto == "/resumen":
+            cancelaciones_activas.pop(chat_id, None)  # Limpiar cancelación previa
             try:
                 portafolio = cargar_portafolio_privado()
                 tickers_procesados = set()
                 for accion in portafolio:
+                    if cancelaciones_activas.get(chat_id):
+                        enviar_mensaje(chat_id, "⏹ Operación cancelada.")
+                        return
+
                     datos = {k.strip(): v for k, v in accion.items()}
                     raw_ticker = datos.get("Ticker", "")
                     ticker = limpiar_ticker(raw_ticker)
@@ -131,7 +144,16 @@ def procesar_mensaje(datos):
                         "CEMEX": "20 Feb 2025", "GFINBUR": "26 Feb 2025"
                     }
                     fecha_compra = fechas_manual.get(ticker.upper(), "No disponible")
+
+                    if cancelaciones_activas.get(chat_id):
+                        enviar_mensaje(chat_id, "⏹ Operación cancelada.")
+                        return
+
                     analisis = obtener_analisis_openai(nombre_legible, ticker)
+
+                    if cancelaciones_activas.get(chat_id):
+                        enviar_mensaje(chat_id, "⏹ Operación cancelada.")
+                        return
 
                     resumen = f"📊 {nombre_legible}"
                     resumen += f"\n1. Precio de compra: ${compra:.2f}"
@@ -143,10 +165,13 @@ def procesar_mensaje(datos):
                     resumen += f"\n7. Análisis financiero:\n{analisis}"
 
                     enviar_mensaje(chat_id, resumen)
+
+                cancelaciones_activas.pop(chat_id, None)
+
             except Exception as e:
                 enviar_mensaje(chat_id, f"⚠️ Error procesando tu portafolio:\n{str(e)}")
         else:
-            enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen.")
+            enviar_mensaje(chat_id, "🤖 Comando no reconocido. Usa /resumen o /cancelar.")
 
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
